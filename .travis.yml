@@ -4,6 +4,8 @@ services:
 env:
   global:
     - DOCKER_COMPOSE_VERSION=1.23.2
+    - secure: "M9gBDwZ15hE/esRSJoxovJq/DWu9PqASKvM4aWjuH2RMBq82sqqXXa981ub7Ke0i+2o+kThnSxYdCYGEybp7wF0+y2VifGFmfXCR7F2Tq8h/xjm5VrS7+FtMnUn5KibLFYA0SjxAurQh3L5moTzc4nxgm9FCsa2VyO8JxNpxwt4Upa1mhD8GwTZQqvyIcHrOksx3Au/sBPpUU0sJ/VL+x0dnA36vhL0BAN9jCi+zEI1PgvUmoMZkeYkFZmrM8tvBO9DNoGEDTki8j6BNJ5F1AiV6GWZbFOZXg2SRg+sgzrosRnjsE87fudRoZUkZJ9v5qhZZLh8zg7glL/JfoU+sg+YsX28p62OJWKDIaTI3bEXiJjsSzLSuEeLCfTRE03+zMDBSYKkSsevKVh4ZIwxir8Tgk044tDapOaxCiPjNA3o+iNDt86my0+mJqimdc/Dwe74VErsrxj+30CqdmQRxYvwPuQnpnoP6kVI4H9kQcg+QkQFiFKzwfQUZdRX4iNubYPBO4fkQBo82HEZ6Hw8cHxj0XRPEej3p7zzPjEwWsV0W2wJqtsaFxVwB3xD7x2ZH8syBQiETL22diEU2g1iMvMBsCS9TfAxLbPtHIid9qJTtC8sL7xzIx2pXaDSX/A+PzSzBA6Od4eCyLAnH+PmsCZb6WBqWIo4M0h5PMjpwMtM="
+    - secure: "pbEY36IT0CYRy/MtA0H/JkWxfX110p1efoV0ovd4kc6cR3SL29Zjv3foKYF2ymMQzkoZjHJRQ/b9hWpxzQUjKr8c8TgtEoHeC2MHnIASFX109V1ZsSGPlxYR1YkCAlj+vAJ4n2EvbPjDrm97G56nF53iLbuEKPoQBIsuMLuuY/086aWCJDhg0aZPq2i2Vfosgr5nauQNdSVpfda8I3KKdBPyq6G4HVeHbdh/9XHOaZ5M/8hG/GBCDCc3yvsJ5FnNtq9GhilhP7yQ+i4szUzL9sFfewfI1MvqYkKJIWD9fzEUcqOihYCYcAfXPx2BTaf0c3bAkXWI3KEbmk1XF3OZfpxYONk3aHbk1/OgZDwz3iu8LSTofdWoUnbjYIKh8TBIxWAfM0YwFAv/ot2zsCrG/8h2zRgmbchtE8LoedrKPgM8hU7xECgzXPftZWgGiavLWqW6pjVc7wbdfwLtG5+XZVVVuP68EcTxQG3Ibx28RkJfMJHedO1ekogO9FDs6KwLugYFdcDcgHhVrSTNXHJasxZRZJNafdyEtMO0xEWDvDegEtEcrPYuZyESFjFAt1YdRtE1OO9yFbBup9NvmFQ63LOLNdNUqwpBgkke4FO+WwQaaymozLRRZbEPqVKlAh0AquFzOCa4RknV1efEBNEFqPeOFM0QIlT7YUj6HSCgfJ8="
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
@@ -12,6 +14,10 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - docker --version
   - docker-compose version
+  - echo "Login into Docker Hub"
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - export GIT_SHA=`git rev-parse --short HEAD`
+  - echo "Building commit $GIT_SHA"
 
 jobs:
   include:
@@ -26,3 +32,18 @@ jobs:
       script:
       - docker-compose build static-analysis
       - docker-compose run static-analysis
+    - stage: push
+      script:
+      - docker-compose build server
+      - docker tag thoughts_server:latest datatrail/thoughts-backend:$GIT_SHA
+      - docker push datatrail/thoughts-backend:$GIT_SHA
+      - docker tag thoughts_server:latest datatrail/thoughts-backend:$TRAVIS_BRANCH
+      deploy:
+      - provider: script
+        script: docker push datatrail/thoughts-backend:$TRAVIS_BRANCH
+        on:
+          branch: master        
+      - provider: script
+        script: docker push datatrail/thoughts-backend:$TRAVIS_TAG
+        on:
+          tags: True
