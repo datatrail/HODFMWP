@@ -54,7 +54,6 @@ services:
                 - POSTGRES_DB=thoughts
                 - POSTGRES_USER=postgres
                 - POSTGRES_PASSWORD=somepassword
-                - POSTGRES_PORT=5432
 
     # Producion related
     # Note that db-debug is the same as db, but it exposes locally
