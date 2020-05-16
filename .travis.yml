@@ -4,7 +4,8 @@ services:
 env:
   global:
     - DOCKER_COMPOSE_VERSION=1.23.2
-    - secure: "EqFe5zvYJjD/igg/w4M6NcV4r4LWCDxKyyLTmAm+lrA8KM2MVWKYeEc4HW7GfuxDz8s8PovnKQLbgrf6zFyhHojGRkOirdtaHrYHalXRy7+a3XGoFwDaHa5j30fnlq5ykYXLG6lVbH3Vz8PlIF2LYwkqI/KcM3rJCe2tuPWZKN+fiE27XNisAGF7v3+gqD7QIIzCEQrURuBf6bpJrfpKEqi0elpVdKF2Zb0vRLkj+bKZ9DGgqqbqX3GmtIC0wfOeG3yZ+92o7NYTstjE6PRj3oBA7JC89SyIFCrT/5egRHuVIkUJUDyHx5VaT7woMwx4LPL4go2YhKv2zd0ZpDCUwazDaaCt8RLLoIlQYlpyeOjm35vimIr3aRtv6bRERmMzGiBXkdzuw8YhtK08SqpmW6DywUqdcdlopTvmJaxrTD55aE7E2CTTONTBRkWiapY3t7fx1bca1R4rMtWoA3Yc6c7gEB1nwvocrY+oncavIgifAohWwljMppLm1yfrCcYwXd8hl3BQvSI3JxPI/gsQS8jXNm+r5m8cYrqdfJagCU+aGPEqUrCPL3P378g+wJvC2ZhmTTSb6JllKfKlUSL7TTCNcML93YfkWAucdwPxEMFx8w0qnOJYh92rci60QbGl7ruu3GiQCyzye8XOCrCPHzgxNulQAEW61GMeT/8/OIs="
+    - secure: "e33AWZg4ExyXP/5K2u1OPU0T51NE/rr9wdST+Xdl/d90uD3v1+j7zoqrAwy6ilaBVHBKRDrrG4TGZFY79ID5IkKbSZOvyeysZ3aG3CqNitHwTUiVByTrIJE0pCP5ui4M91n3xZC0tklHSoxVUOoT2Lugc4G32XdYyswT6ZLsEY0XpRPY1XXoiQY+DpOSU/dgHzYN2y3fTfIAi39bcyu2EdkLE5Ra+82tGEPZ0pICfx6PVWvGN/eVnvN3nnPapITGL+y4xCuiz9d83VPV4DjCgJjJEIMbjEvJfCozYiyk9Nl30b7qyvkxvM598Hy7SW1Teho49IzAs8ATULWvMjvvHYY5ZLiuew9gppUKeQaqcxkQxu4F5Wnwnwj7KyGSOeQD5H+A4K4J71H1EzbHayA2B21QAjHN0Clt+Wf101KzTEhQdaCPsiDPcqmrUOjL5ZTitCmgrg6UQcICuK1z6r2yyGuVyvAJ1ZnmNy2IhKiiClVa81jK3r/mDW1jvBjbpmKmNXXX5hRSj7JCDEePVRIA4vYMqP5IsWoQyiEiH4PgJoqmMSNTFqYhlNled2V8iAPF+eDMX0xCahpeLUCmDnk7Ka/Fa0rJLLHc/90+PVmBVWKeEtowm+7K3ks9QcupQtUefJ8EKhk05lLHkv2NafOSj+dNtyFpJyfzufDVVe7D3rw="
+    - secure: "SOkLnF2Xgp2F7EfbdcutyegttTgKWdpPrp9SWAqjoezKdPKKkXqPUxnr8JDO1o+GNFDkix4iIrFITzLFv3N5xXeICIREPm1HtgJaErNfzWrLbNX9IbRWDYBkHOmVUZv9PM/km5XKhKLJ985b+TO5lvXPfgXtQ1l4SCd81k9wq4T92b1wqijNiCNhtmcSurnL300XSmYj5ZL41HffNnW9P2Cu4nXIPYbMSgF+jxN6b+XJfHBwtmWqGXW/REf0238w776rr4xyuat0oJhX3BZNtJXzPzT6Ubn/OzmMRCjP4j2RxNBWxgR3F5pqqxFDZebnV/noTJpREylmEwmXLDnOKcJSFDWvPn+5zxRCccUxbLJ9/y5r7yKNg3xOl6noAx8bvgLaJ8yb4H1bxlEHEoPPyRyWeaNFTIvDHNlh4nJAaLyhMtjzo6AOswl6RGLOKAdUG8wtIAaIC2xVEZoKIA8pzSM0FFiUdln2UQNXGFXMFwjbQRU08y9ddS7ncUp0+SLwVhrQnekFXy9VRXeQTMXQ0dWXzRtAIn9NtyTtGEq95pyJX986bXIeAouWdqqCiu99/JOBTkyirLILZLSUO3VloSU07VamYqgVMtA+EXX+KZwWhcuk/1/aqA20s/8mA6Cc3GtkgUbpEQQnz6MtO0VYqnrNJ0ZnWH+8Jxz1sGn66iM="
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
@@ -14,5 +15,38 @@ before_install:
   - docker --version
   - docker-compose version
   - echo "Login into Docker Hub"
-  - echo "$DUMMY1"
-  - echo "$DUMMY2"
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - export GIT_SHA=`git rev-parse --short HEAD`
+  - echo "Building commit $GIT_SHA"
+
+jobs:
+  include:
+    - stage: tests
+      name: "Unit Tests"
+      script:
+      - cd ch4
+      - docker-compose build db
+      - docker-compose build test-postgresql
+      - docker-compose run test-postgresql
+    - stage: tests
+      name: "Static Analysis"
+      script:
+      - cd ch4
+      - docker-compose build static-analysis
+      - docker-compose run static-analysis
+    - stage: push
+      script:
+      - cd ch4
+      - docker-compose build server
+      - docker tag thoughts_server:latest datatrail/thoughts-backend:$GIT_SHA
+      - docker push datatrail/thoughts-backend:$GIT_SHA
+      - docker tag thoughts_server:latest datatrail/thoughts-backend:$TRAVIS_BRANCH
+      deploy:
+      - provider: script
+        script: docker push datatrail/thoughts-backend:$TRAVIS_BRANCH
+        on:
+          branch: master        
+      - provider: script
+        script: docker push datatrail/thoughts-backend:$TRAVIS_TAG
+        on:
+          tags: True
